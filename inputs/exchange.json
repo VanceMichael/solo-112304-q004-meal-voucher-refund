@@ -1,0 +1,249 @@
+{
+  "initial": {
+    "/merchant/activity": {
+      "status": 200,
+      "kind": "html",
+      "body": "<main data-activity=\"M-9\"><a href=\"/merchant/vouchers\">券包与授权</a><a href=\"/merchant/refunds\">退款</a></main>"
+    },
+    "/merchant/vouchers": {
+      "status": 200,
+      "kind": "json",
+      "body": {
+        "vouchers": [
+          {
+            "id": "ME-1",
+            "rights": [
+              [
+                "R1",
+                1200
+              ],
+              [
+                "R2",
+                1800
+              ]
+            ],
+            "windows": [
+              [
+                "A",
+                "16:00",
+                "20:00"
+              ],
+              [
+                "B",
+                "20:00",
+                "23:00"
+              ]
+            ],
+            "transfer": "20:00"
+          },
+          {
+            "id": "ME-2",
+            "rights": [
+              [
+                "R3",
+                2200
+              ]
+            ],
+            "windows": [
+              [
+                "C",
+                "16:00",
+                "23:00"
+              ]
+            ],
+            "transfer": null
+          }
+        ],
+        "day": "2026-11-30"
+      }
+    },
+    "/pos/closures": {
+      "status": 200,
+      "kind": "json",
+      "body": {
+        "ranges": [
+          {
+            "store": "A",
+            "device": "AX",
+            "shift": "E-1",
+            "begin": 1,
+            "end": 4,
+            "empty": [
+              3
+            ]
+          },
+          {
+            "store": "B",
+            "device": "BX",
+            "shift": "E-1",
+            "begin": 1,
+            "end": 2,
+            "empty": [
+              2
+            ]
+          },
+          {
+            "store": "C",
+            "device": "CX",
+            "shift": "E-1",
+            "begin": 1,
+            "end": 1,
+            "empty": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    "/pos/sync": {
+      "status": 200,
+      "kind": "json",
+      "body": {
+        "entries": [
+          {
+            "store": "A",
+            "device": "AX",
+            "shift": "E-1",
+            "seq": 1,
+            "op": "redeem",
+            "right": "R2",
+            "occurred": "19:02",
+            "received": "19:02"
+          },
+          {
+            "store": "A",
+            "device": "AX",
+            "shift": "E-1",
+            "seq": 4,
+            "op": "void",
+            "right": "R2",
+            "ref": [
+              "AX",
+              "E-1",
+              1
+            ],
+            "occurred": "19:20",
+            "received": "19:25"
+          },
+          {
+            "store": "B",
+            "device": "BX",
+            "shift": "E-1",
+            "seq": 1,
+            "op": "redeem",
+            "right": "R2",
+            "occurred": "19:45",
+            "received": "19:46"
+          }
+        ]
+      }
+    },
+    "/merchant/progress": {
+      "status": 200,
+      "kind": "json",
+      "body": {
+        "transfers": [
+          {
+            "voucher": "ME-1",
+            "current": "B",
+            "effective": "20:00"
+          }
+        ],
+        "refunds": []
+      }
+    }
+  },
+  "changes": [
+    {
+      "label": "结班文件尚未补齐时外部先完成一项退款",
+      "routes": {
+        "/merchant/progress": {
+          "status": 200,
+          "kind": "json",
+          "body": {
+            "transfers": [
+              {
+                "voucher": "ME-1",
+                "current": "B",
+                "effective": "20:00"
+              }
+            ],
+            "refunds": [
+              {
+                "right": "R1",
+                "state": "completed",
+                "ref": "OLD-ME-1",
+                "time": "21:10",
+                "fen": 1200
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "label": "次日补传原班收银证据",
+      "routes": {
+        "/pos/sync": {
+          "status": 200,
+          "kind": "json",
+          "body": {
+            "entries": [
+              {
+                "store": "A",
+                "device": "AX",
+                "shift": "E-1",
+                "seq": 2,
+                "op": "redeem",
+                "right": "R1",
+                "occurred": "19:15",
+                "received": "次日08:00"
+              },
+              {
+                "store": "B",
+                "device": "BX",
+                "shift": "E-2",
+                "seq": 1,
+                "op": "void",
+                "right": "R1",
+                "ref": [
+                  "BX",
+                  "E-1",
+                  1
+                ],
+                "occurred": "23:03",
+                "received": "次日08:05"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "forms": {
+    "/merchant/refunds": {
+      "operations": [
+        "refund",
+        "inquire"
+      ],
+      "identifier": "MRT",
+      "outcomes": {
+        "1": {
+          "refund": {
+            "R2": "pending",
+            "@response": "lost"
+          }
+        }
+      },
+      "browser": true
+    },
+    "/finance/debts": {
+      "operations": [
+        "claim"
+      ],
+      "identifier": "AF",
+      "outcomes": {},
+      "browser": false
+    }
+  }
+}
